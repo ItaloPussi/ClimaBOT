@@ -1,0 +1,279 @@
+{
+  "name": "ClimaBot",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f0e88e1d-9d25-49be-9843-91956e075646",
+      "name": "Message Received | Telegram",
+      "webhookId": "23c5f87f-88e9-4112-8243-39fe9425fe1f",
+      "credentials": {
+        "telegramApi": {
+          "id": "r60zP73NuIJLzuLf",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.last().json.message.text\nreturn (function cleanText(str) {\n    return {\n      queue: `${str\n        .normalize(\"NFD\")              \n        .replace(/[\\u0300-\\u036f]/g, \"\") \n        .toLowerCase()                 \n        .trim()}, br`\n    }                      \n})(input)"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "9fd04bbd-a8ed-4a30-80bf-9b4c7518b0de",
+      "name": "Parse Input | JavaScript"
+    },
+    {
+      "parameters": {
+        "url": "https://api.openweathermap.org/data/2.5/weather",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.queue }}"
+            },
+            {
+              "name": "units",
+              "value": "metric"
+            },
+            {
+              "name": "lang",
+              "value": "pt_br"
+            },
+            {
+              "name": "appid",
+              "value": "OPENWEATHER_API_KEY"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "4db6706f-2260-4a2f-bd62-52371d862a25",
+      "name": "Weather Request | OpenWeatherMap",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        432,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5f0ebbdc-8308-49f2-ac4a-766fa77d1b8b",
+              "name": "city_name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "c0b87749-3f9f-4643-b428-3e6d0222b1b7",
+              "name": "city_temp",
+              "value": "={{ $json.main.temp.round() }}",
+              "type": "number"
+            },
+            {
+              "id": "14c5f281-30e0-46b4-bee6-244270b6da54",
+              "name": "request_successful",
+              "value": "={{ $json.cod == 200 }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        0
+      ],
+      "id": "6e764c7c-46b9-402a-ad67-829434ed50dc",
+      "name": "Parse API Fields"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Message Received | Telegram').item.json.message.chat.id }}",
+        "text": "=❌ Cidade não encontrada. Use o formato Cidade,UF (ex.: São Paulo,SP).",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1056,
+        80
+      ],
+      "id": "39178aa9-05f8-4600-9834-b00051aca794",
+      "name": "Failure Message | Telegram",
+      "webhookId": "de8e2569-9041-47f9-b94c-18ac587df8bf",
+      "credentials": {
+        "telegramApi": {
+          "id": "r60zP73NuIJLzuLf",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Message Received | Telegram').item.json.message.chat.id }}",
+        "text": "=🌤️ A temperatura em {{ $json.city_name }} é de {{ $json.city_temp }}°C.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1056,
+        -96
+      ],
+      "id": "b220f4af-0384-4f95-9455-1573f481aa25",
+      "name": "Success Message | Telegram",
+      "webhookId": "de8e2569-9041-47f9-b94c-18ac587df8bf",
+      "credentials": {
+        "telegramApi": {
+          "id": "r60zP73NuIJLzuLf",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "edb96839-d523-4da5-a6da-fb49ab1127a8",
+              "leftValue": "={{ $json.request_successful }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        0
+      ],
+      "id": "21e283a5-2b18-4484-aa4d-39c91a154c29",
+      "name": "Request Successful?"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Message Received | Telegram": {
+      "main": [
+        [
+          {
+            "node": "Parse Input | JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input | JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Weather Request | OpenWeatherMap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weather Request | OpenWeatherMap": {
+      "main": [
+        [
+          {
+            "node": "Parse API Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse API Fields": {
+      "main": [
+        [
+          {
+            "node": "Request Successful?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request Successful?": {
+      "main": [
+        [
+          {
+            "node": "Success Message | Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Failure Message | Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d530d8b8-1acd-4738-a55b-b3bdb76eb2db",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fc234712fa02c379de4deeefab6156bca31158456ba65c8bb95206a01cc83b8a"
+  },
+  "id": "EqsLVpIDIqOZLzF4",
+  "tags": []
+}
