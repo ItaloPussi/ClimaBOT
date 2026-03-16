@@ -28,18 +28,12 @@ Para o funcionamento correto deste workflow, é obrigatório:
 
 ### 2. Configuração de Credenciais (Telegram)
 O workflow utiliza o recurso nativo de credenciais do n8n. Você deve configurar seu token nos seguintes nós:
-* `Message Received | Telegram`
-* `Success Message | Telegram`
-* `Failure Message | Telegram`
+* `Mensagem Recebida | Telegram`
+* `Mensagem de Sucesso | Telegram`
+* `Mensagem de Erro | Telegram`
+* `OpenWeatherMap`
 
-**Como configurar:** Em qualquer um desses nós, selecione sua credencial existente ou crie uma nova inserindo o seu `TELEGRAM_BOT_TOKEN`.
-
-### 3. Configuração da API (OpenWeather)
-No nó `Weather Request | OpenWeatherMap`, você deve inserir sua chave de API:
-1.  Localize a seção **Query Parameters**.
-2.  No parâmetro `appid`, insira a sua chave **OPENWEATHER_API_KEY**.
-3.  Os parâmetros `units` (metric) e `lang` (pt_br) já vêm configurados por padrão.
-
+**Como configurar:** Em qualquer um desses nós, selecione sua credencial existente ou crie uma nova inserindo o seu `TELEGRAM_API_KEY` ou 'OPENWEATHER_API_KEY'.
 ---
 
 ## 🧬 Estrutura Técnica do Workflow
